@@ -1,10 +1,11 @@
 /***********************
 * 0h Game Jam
-* Samuel Donow
+* Sam Donow: sad3@williams.edu
 * (c) 2pm November 2, 2014
 * 
+* Visual modifications made after the game jam for polish
+* with the aid of Nigel Munoz: nm9@williams.edu
 *************************/
-include('utils2.js')
 
 var START_TIME = currentTime();
 
@@ -14,12 +15,13 @@ var direction
 var SpawnTime
 var enemies
 var frameCount
-
+var font = "Oswald"
 var digitsToDisplay
 
 var boop = loadSound('sound1.wav')
 var showStartScreen
 
+defineFont("Oswald", "Oswald-Regular")
 Array.prototype.remove = function(obj) {
     for (var i = 0; i < this.length; ++i) {
         if (obj === this[i]) {
@@ -71,8 +73,8 @@ function printNumber(str, xloc, yloc) {
     fillText(str,
          xloc, 
          yloc,             
-         makeColor(0.5, 0.0, 1.0, 1.0), 
-         "60px Times New Roman", 
+         makeColor(0.9, 0.9, 0.9, 1.0), 
+         "60px " + font, 
          "left",
          "top")
 }
@@ -91,21 +93,22 @@ function spawnEnemies() {
         enemies.push({
             x : randomReal(screenWidth / 9.0, 8.0 * screenWidth / 9.0),
             y : 0,
-            value : gaussian( 0.5, 0.3 * (1 + (frameCount / 55)))
+            value : gaussian( min(2, 2 / (0.01 * (frameCount + 1))), 0.3 * (1 + (Math.sqrt(frameCount) / 55)))
         })
     }
 }
 
 function moveEnemies() {
     for (var i = 0; i < enemies.length; ++i) {
-        enemies[i].y += 8 + (frameCount) / (SpawnTime * 8)
+        enemies[i].y += 9 + (frameCount) / (SpawnTime * 8)
     }
 }
 
+/** computes the bounds of a number */
 function bounds(str, x, y) {
     _ch_ctx.textAlign    = 'left'
     _ch_ctx.textBaseline = 'top';
-    _ch_ctx.font         = '60px Times New Roman'
+    _ch_ctx.font         = '60px ' + font
 
     return {
         xmin: x,
@@ -114,6 +117,45 @@ function bounds(str, x, y) {
         ymax: y + 60
     }
 }
+
+/** From Morgan McGuire's utils */
+function fillTextWordWrap(maxWidth, lineHeight, text, x, y, color, style, xAlign, yAlign) {
+    xAlign = (xAlign === undefined) ? 'start' : xAlign;
+    yAlign = (yAlign === undefined) ? 'alphabetic' : yAlign;
+
+    _ch_ctx.textAlign    = xAlign;
+    _ch_ctx.textBaseline = yAlign;
+    _ch_ctx.font         = style;
+    _ch_ctx.fillStyle    = color;
+
+    var words = text.split(' ');
+    var line = '';
+
+    for (var n = 0; n < words.length; ++n) {
+        var testLine = line + words[n];
+        var testWidth = _ch_ctx.measureText(testLine).width;
+        if (testWidth > maxWidth) {
+            // Fail: draw the line
+            try { _ch_ctx.fillText(line, x, y); } catch (e) {}
+            line = words[n] + ' ';
+            y += lineHeight;
+        } else {
+            // Succeed; add the word (and maybe whitespace) to the
+            // line and continue
+            line = testLine + ((n === words.length - 1) ? '' : ' ');
+        }
+    }
+
+    // Draw the final line fragment
+    try { _ch_ctx.fillText(line, x, y); } catch (e) {}
+}
+
+function clamp(v, low, high) {
+    return Math.max(low, Math.min(high, v));
+}
+
+///end McGuire's utils
+
 
 function handleCollisions() {
     pbounds = bounds(player.value.toFixed(digitsToDisplay) + '', player.x, player.y)
@@ -129,7 +171,7 @@ function handleCollisions() {
                 onSetup()
                 return
             } else if (player.value + enemies[i].value < 0) {
-                alert("You went Negative. You lost. Hahahah")
+                alert("You went Negative. You lost.")
                 onSetup()
                 return
             }
@@ -151,12 +193,12 @@ function cullEnemies() {
 
 function onTick() {
 
-    fillRectangle(0, 0, screenWidth, screenHeight, makeColor(0.05, 0.05, 0.05));
+    fillRectangle(0, 0, screenWidth, screenHeight, makeColor(0.1, 0.1, 0.1));
 
     if (!showStartScreen) {
         frameCount += 1
         if (digitsToDisplay < 20) {
-            digitsToDisplay = 3 + (frameCount / 300)
+            digitsToDisplay = 4 + (frameCount / 300)
         }
 
         SpawnTime -= 2 * (frameCount % 300 == 0)
@@ -178,11 +220,16 @@ function onTick() {
         }
         handleCollisions()
     } else {
-        fillTextWordWrap(0.9 * screenWidth, 200, "Try to collect the falling numbers to get your sum as close to 10 as possible. You lose if you go over or go negative.",
-         0.0, 
-         screenHeight / 4,             
-         makeColor(0.5, 0.0, 1.0, 1.0), 
-         "150px Times New Roman")
-    }
+        fillTextWordWrap(0.9 * screenWidth, 100, "Move with arrow keys to collect the falling numbers to get your sum as close to 10 as possible. You lose if you go over or go negative.",
+         screenWidth/2, 
+         screenHeight / 2.15,             
+         makeColor(0.9, 0.9, 0.9, 1.0), 
+         "85px " + font,
+         "center",
+         "center")
+        fillText("10 Sum", 0.5 * screenWidth, 0.2 * screenHeight, makeColor(0.9, 0.9, 0.9), '200px ' + font, 'center')
+        fillText("By: Sam Donow", 0.365 * screenWidth, 0.26 * screenHeight, makeColor(0.9, 0.9, 0.9), '60px ' + font)
+        fillText("Press any key to start", 0.5 * screenWidth, 0.87 * screenHeight, makeColor(0.9, 0.9, 0.9), '125px ' + font, 'center')
+            }
 }
 
